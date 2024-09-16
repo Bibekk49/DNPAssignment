@@ -5,23 +5,15 @@ using RepositoryContracts;
 
 namespace CLI.UI.ManagePosts
 {
-    public class ManagePostsView
+    public class ManagePostsView(IPostRepository postRepository)
     {
-        private readonly CreatePostView _createPostView;
-        private readonly ListPostsView _listPostsView;
-        private readonly SinglePostView _singlePostView;
-        private readonly IPostRepository _postRepository;
-        public ManagePostsView(IPostRepository postRepository)
-        {
-            _createPostView = new CreatePostView(postRepository);
-            _listPostsView = new ListPostsView(postRepository);
-            _singlePostView = new SinglePostView(postRepository);
-            _postRepository = postRepository;
-        }
+        private readonly CreatePostView _createPostView = new(postRepository);
+        private readonly ListPostsView _listPostsView = new(postRepository);
+        private readonly SinglePostView _singlePostView = new(postRepository);
 
         public async Task ShowMenuAsync()
         {
-            bool back = false;
+            var back = false;
 
             while (!back)
             {
@@ -34,7 +26,7 @@ namespace CLI.UI.ManagePosts
                 Console.WriteLine("0. Back");
                 Console.Write("Select an option: ");
 
-                string choice = Console.ReadLine();
+                var choice = Console.ReadLine();
 
                 switch (choice)
                 {
@@ -68,7 +60,7 @@ namespace CLI.UI.ManagePosts
             Console.Write("\nEnter post ID to update: ");
             int postId = Convert.ToInt32(Console.ReadLine());
 
-            Post post = await _postRepository.GetSingleAsync(postId);
+            Post post = await postRepository.GetSingleAsync(postId);
             if (post != null)
             {
                 Console.Write("Enter new title: ");
@@ -77,7 +69,7 @@ namespace CLI.UI.ManagePosts
                 Console.Write("Enter new body: ");
                 post.Body = Console.ReadLine();
 
-                await _postRepository.UpdateAsync(post);
+                await postRepository.UpdateAsync(post);
                 Console.WriteLine("\nPost updated successfully.\n");
             }
         }
@@ -87,10 +79,10 @@ namespace CLI.UI.ManagePosts
             Console.Write("Enter post ID to delete: ");
             int postId = Convert.ToInt32(Console.ReadLine());
 
-            Post post = await _postRepository.GetSingleAsync(postId);
+            Post post = await postRepository.GetSingleAsync(postId);
             if (post != null)
             {
-                await _postRepository.DeleteAsync(postId);
+                await postRepository.DeleteAsync(postId);
                 Console.WriteLine("Post deleted successfully.");
             }
         }

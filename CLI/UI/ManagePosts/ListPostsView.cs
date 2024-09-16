@@ -3,18 +3,11 @@ using RepositoryContracts;
 
 namespace CLI.UI.ManagePosts;
 
-public class ListPostsView
+public class ListPostsView(IPostRepository postRepository)
 {
-    private readonly IPostRepository _postRepository;
-
-    public ListPostsView(IPostRepository postRepository)
-    {
-        _postRepository = postRepository;
-    }
-
     public Task ShowListPostViewAsync()
     {
-        IQueryable<Post> queryablePost = _postRepository.GetMany();
+        var queryablePost = postRepository.GetMany();
 
         if (!queryablePost.Any())
         {

@@ -4,21 +4,14 @@ using RepositoryContracts;
 
 namespace CLI.UI.ManagePosts;
 
-public class SinglePostView
+public class SinglePostView(IPostRepository postRepository)
 {
-    private readonly IPostRepository _postRepository;
-
-    public SinglePostView(IPostRepository postRepository)
-    {
-        _postRepository = postRepository;
-    }
-
     public async Task ViewSinglePostAsync()
     {
         Console.Write("Enter post ID: ");
-        int postId = Convert.ToInt32(Console.ReadLine());
+        var postId = Convert.ToInt32(Console.ReadLine());
 
-        Post post = await _postRepository.GetSingleAsync(postId);
+        var  post = await postRepository.GetSingleAsync(postId);
 
         Console.WriteLine($"\nPost:\nID: {post.Id}\nTitle: {post.Title}\nBody: {post.Body}\n");
     }

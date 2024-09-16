@@ -1,34 +1,27 @@
 using Entities;
 using RepositoryContracts;
 
-namespace CLI.UI.MangePosts;
+namespace CLI.UI.ManagePosts;
 
-public class CreatePostView
+public class CreatePostView(IPostRepository postRepository)
 {
-    private readonly IPostRepository postRepository;
-
-    public CreatePostView(IPostRepository postRepository)
-    {
-        this.postRepository = postRepository;
-    }
-
     public async Task ShowCreatePostViewAsync()
     {
         Console.Write("Enter title: ");
-        string? title = Console.ReadLine();
+        var title = Console.ReadLine();
 
         Console.Write("Enter body: ");
-        string? body = Console.ReadLine();
+        var body = Console.ReadLine();
 
         Console.Write("Enter userID: ");
-        int userId = Convert.ToInt32(Console.ReadLine());
+        var userId = Convert.ToInt32(Console.ReadLine());
 
         if (title is null || body is null)
         {
             return;
         }
 
-        Post post = new Post { Body = body, UserId = userId, Title = title };
+        var post = new Post { Body = body, UserId = userId, Title = title };
 
         await postRepository.AddAsync(post);
         Console.WriteLine($"Post with id {post.Id} is created ");
