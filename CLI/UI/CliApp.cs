@@ -1,17 +1,18 @@
+using CLI.UI.ManageComments;
 using CLI.UI.ManagePosts;
-
+using CLI.UI.MangePosts;
 using RepositoryContracts;
 
 namespace CLI.UI;
 
-public class CliApp
+public class CliApp(
+    IUserRepository userRepository,
+    IPostRepository postRepository,
+    ICommentRepository commentRepository)
 {
-    private readonly ManagePostsView _managePostsView;
-
-    public CliApp(IUserRepository userRepository, IPostRepository postRepository, ICommentRepository commentRepository)
-    {
-        _managePostsView = new ManagePostsView(postRepository);
-    }
+    private readonly ManagePostsView _managePostsView = new(postRepository);
+    private readonly ManageUsersView _manageUserView = new(userRepository);
+    private readonly ManageCommentsView _manageCommentsView = new(commentRepository);
 
     public async Task StartAsync()
     {
@@ -30,11 +31,13 @@ public class CliApp
             switch (choice)
             {
                 case "1":
+                    await _manageUserView.ShowMenuAsync();
                     break;
                 case "2":
                     await _managePostsView.ShowMenuAsync();
                     break;
                 case "3":
+                    await _manageCommentsView.ShowMenuAsync();
                     break;
                 case "0":
                     exit = true;
