@@ -5,7 +5,6 @@ namespace CLI.UI.ManageUsers;
 
 public class CreateUserView(IUserRepository userRepository)
 {
-    private readonly IUserRepository _userRepository = userRepository;
 
     public Task ShowCreateUserViewAsync()
     {
@@ -19,7 +18,8 @@ public class CreateUserView(IUserRepository userRepository)
         {
             return Task.CompletedTask;
         }
-        var user = new User { Name = name, Password = password };
+        User user = new User { Name = name, Password = password };
+        userRepository.AddAsync(user);
         Console.WriteLine($"New User with id {user.Id} is created ");
         return Task.CompletedTask;
     }

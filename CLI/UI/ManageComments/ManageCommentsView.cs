@@ -1,3 +1,4 @@
+using Entities;
 using RepositoryContracts;
 
 namespace CLI.UI.ManageComments;
@@ -50,16 +51,19 @@ public class ManageCommentsView(ICommentRepository commentRepository)
         Console.Write("\nEnter post ID to comment: ");
         int postId = Convert.ToInt32(Console.ReadLine());
         Console.Write("\nEnter comment: ");
-        string comment = Console.ReadLine();
+        string? comment = Console.ReadLine();
         Console.Write("\nEnter user ID: ");
         int userId = Convert.ToInt32(Console.ReadLine());
         
-        // Create comment
+        commentRepository.AddAsync(new Comment { PostId = postId, Body = comment, UserId = userId });
         Console.WriteLine("Comment created successfully");
     }
     private async Task ListCommentsAsync()
     {
-        // List comments
+        Console.Write("\nEnter post ID to list comments: ");
+        int postId = Convert.ToInt32(Console.ReadLine());
+        commentRepository.GetMany().Where(c => c.PostId == postId).ToList().ForEach(c => Console.WriteLine($"ID: {c.Id}, Body: {c.Body}, User ID: {c.UserId}, Post ID: {c.PostId}"));
+        Console.WriteLine("Comments listed successfully");
     }
     private async Task UpdateCommentAsync()
     {
@@ -67,16 +71,14 @@ public class ManageCommentsView(ICommentRepository commentRepository)
         int commentId = Convert.ToInt32(Console.ReadLine());
         Console.Write("\nEnter new comment: ");
         string comment = Console.ReadLine();
-        
-        // Update comment
+        commentRepository.UpdateAsync(new Comment { Id = commentId, Body = comment });
         Console.WriteLine("Comment updated successfully");
     }
     private async Task DeleteCommentAsync()
     {
         Console.Write("\nEnter comment ID to delete: ");
         int commentId = Convert.ToInt32(Console.ReadLine());
-        
-        // Delete comment
+        commentRepository.DeleteAsync(commentId);
         Console.WriteLine("Comment deleted successfully");
     }
 }

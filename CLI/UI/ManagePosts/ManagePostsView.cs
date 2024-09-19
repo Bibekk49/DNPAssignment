@@ -19,7 +19,7 @@ namespace CLI.UI.ManagePosts
             {
                 Console.WriteLine("\nManage Posts Menu:");
                 Console.WriteLine("1. Create Post");
-                Console.WriteLine("2. List Posts");
+                Console.WriteLine("2. View List Of Posts");
                 Console.WriteLine("3. View Single Post");
                 Console.WriteLine("4. Update Post");
                 Console.WriteLine("5. Delete Post");

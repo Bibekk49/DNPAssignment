@@ -54,12 +54,21 @@ public class ManageUsersView(IUserRepository userRepository)
         Console.Write("\nEnter user ID to delete: ");
         int userId = Convert.ToInt32(Console.ReadLine());
 
-        User user= await userRepository.GetSingleAsync(userId);
+        await userRepository.DeleteAsync(userId);
         Console.WriteLine($"User with id {userId} is deleted");
     }
 
     private async Task UpdateUserAsync()
     {
-        
+        Console.Write("\nEnter user ID to update: ");
+        int userId = Convert.ToInt32(Console.ReadLine());
+
+        Console.Write("Enter name: ");
+        string? name = Console.ReadLine();
+
+        Console.Write("Enter password: ");
+        string? password = Console.ReadLine();
+        userRepository.UpdateAsync(new User { Id = userId, Name = name, Password = password });
+        Console.WriteLine($"User with id {userId} is updated");
     }
 }
