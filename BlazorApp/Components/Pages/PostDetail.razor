@@ -1,34 +1,56 @@
 @page "/post/{postId:int}"
+@attribute [Authorize]
+@using System.Security.Claims
 @using ApiContracts
 @using BlazorApp.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
+@using Microsoft.AspNetCore.Authorization
 @inject IPostService PostService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+<link rel="stylesheet" href="postDetail.css"/>
+
 @code {
     [Parameter] public int postId { get; set; }
     private PostDto post;
     private List<CommentDto> comments = new List<CommentDto>();
     private CreateCommentDto newComment = new CreateCommentDto
     {
-        UserId = 1,
+        UserId = 1,  // Hardcoded user ID
         PostId = 1,
         Body = null
-    }; // Hardcoded user ID
+    };
+
+    private ClaimsPrincipal currentUser;
 
     protected override async Task OnParametersSetAsync()
     {
         post = await PostService.GetPostByIdAsync(postId);
         comments = await PostService.GetCommentsAsync(postId);
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+
+        if (currentUser.Identity.IsAuthenticated)
+        {
+            newComment.UserId = int.Parse(currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        }
     }
 
     private async Task AddCommentAsync()
     {
-        await PostService.AddCommentAsync(newComment);
-        comments = await PostService.GetCommentsAsync(postId); // Refresh comments list
-        newComment = new CreateCommentDto
+        if (!string.IsNullOrEmpty(newComment.Body))
         {
-            UserId = 1,
-            PostId = postId,
-            Body = null
-        };
+            await PostService.AddCommentAsync(newComment);
+            comments = await PostService.GetCommentsAsync(postId); // Refresh comments list
+            newComment = new CreateCommentDto
+            {
+                UserId = int.Parse(currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0"),
+                PostId = postId,
+                Body = null
+            };
+        }
     }
 }
 
@@ -36,15 +58,34 @@
 <p>@post?.Body</p>
 
 <h4>Comments</h4>
-<ul>
+<ul class="comments-list">
     @foreach (var comment in comments)
     {
-        <li>@comment.Body</li>
+        <li class="comment-item">
+            <div class="comment-avatar">
+                <!-- Placeholder for avatar image (replace with actual user's avatar URL) -->
+                <img src="https://via.placeholder.com/40" alt="User Avatar" />
+            </div>
+            <div class="comment-body">
+                <div class="comment-author">@comment.UserId</div>
+                <p>@comment.Body</p>
+            </div>
+        </li>
     }
 </ul>
 
 <h4>Add Comment</h4>
-<div>
-    <textarea @bind="newComment.Body" placeholder="Your comment"></textarea>
-    <button @onclick="AddCommentAsync">Add Comment</button>
+<div class="comment-form">
+    @if (currentUser?.Identity?.IsAuthenticated ?? false)
+    {
+        <div class="comment-input">
+            <textarea @bind="newComment.Body" placeholder="What’s on your mind?" class="discord-textarea"></textarea>
+            <button @onclick="AddCommentAsync" class="discord-btn">Add Comment</button>
+        </div>
+    }
+    else
+    {
+        <p class="login-prompt">You must be logged in to add a comment.</p>
+    }
 </div>
+
