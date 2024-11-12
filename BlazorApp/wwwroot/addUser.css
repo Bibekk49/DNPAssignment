@@ -1,0 +1,69 @@
+.register-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #36393f; /* Discord-like background color */
+    color: #ffffff;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.register-container h2 {
+    font-size: 24px;
+    margin-bottom: 1rem;
+}
+
+.status-message-success {
+    color: #43b581; /* Green color for success */
+    font-size: 14px;
+    margin-bottom: 1rem;
+}
+
+.status-message-error {
+    color: #f04747; /* Red color for errors */
+    font-size: 14px;
+    margin-bottom: 1rem;
+}
+
+.input-group {
+    margin-bottom: 1rem;
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #72767d;
+    background-color: #40444b;
+    color: #dcddde;
+}
+
+.input-field::placeholder {
+    color: #72767d;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #7289da; /* Discord-like blue */
+}
+
+.submit-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    color: #ffffff;
+    background-color: #7289da; /* Discord-like blue */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-button:hover {
+    background-color: #5b6eae;
+}
+
+.submit-button:active {
+    background-color: #4e5e92;
+}

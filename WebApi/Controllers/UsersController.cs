@@ -9,7 +9,7 @@ using RepositoryContracts;
 namespace WebAPI.Controllers;
 
 [ApiController]
-[Route("users")]
+[Route("api/users")]
 public class UsersController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
@@ -19,14 +19,25 @@ public class UsersController : ControllerBase
         _userRepository = userRepository;
     }
 
-    [HttpPost]
-    public async Task<IResult> CreateAsync(CreateUserDto userDto)
+    [HttpPost("create")]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto userDto)
     {
-        User createdUser = await _userRepository.AddAsync(new User
+        // Check if the username already exists
+        bool usernameExists = await _userRepository.UsernameExistsAsync(userDto.Name);
+        if (usernameExists)
         {
-            Name = userDto.Name, Password = userDto.Password
-        });
-        return Results.Created($"users/{createdUser.Id}", createdUser);
+            return Conflict("Username already exists");
+        }
+
+        // Create and save the new user
+        var user = new User
+        {
+            Name = userDto.Name,
+            Password = userDto.Password
+        };
+        await _userRepository.AddAsync(user);
+
+        return CreatedAtAction(nameof(CreateUser), new { id = user.Id }, user);
     }
 
     [HttpGet("{id:int}")]

@@ -1,0 +1,50 @@
+@page "/post/{postId:int}"
+@using ApiContracts
+@using BlazorApp.Services
+@inject IPostService PostService
+@code {
+    [Parameter] public int postId { get; set; }
+    private PostDto post;
+    private List<CommentDto> comments = new List<CommentDto>();
+    private CreateCommentDto newComment = new CreateCommentDto
+    {
+        UserId = 1,
+        PostId = 1,
+        Body = null
+    }; // Hardcoded user ID
+
+    protected override async Task OnParametersSetAsync()
+    {
+        post = await PostService.GetPostByIdAsync(postId);
+        comments = await PostService.GetCommentsAsync(postId);
+    }
+
+    private async Task AddCommentAsync()
+    {
+        await PostService.AddCommentAsync(newComment);
+        comments = await PostService.GetCommentsAsync(postId); // Refresh comments list
+        newComment = new CreateCommentDto
+        {
+            UserId = 1,
+            PostId = postId,
+            Body = null
+        };
+    }
+}
+
+<h3>@post?.Title</h3>
+<p>@post?.Body</p>
+
+<h4>Comments</h4>
+<ul>
+    @foreach (var comment in comments)
+    {
+        <li>@comment.Body</li>
+    }
+</ul>
+
+<h4>Add Comment</h4>
+<div>
+    <textarea @bind="newComment.Body" placeholder="Your comment"></textarea>
+    <button @onclick="AddCommentAsync">Add Comment</button>
+</div>

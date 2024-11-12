@@ -24,7 +24,9 @@ public class CommentsController : ControllerBase
     {
         Comment comment = await _commentRepository.AddAsync(new Comment
         {
-            Body = commentDto.Body, UserId = commentDto.UserId, PostId = commentDto.PostId
+            Body = commentDto.Body,
+            UserId = 1, // Hardcoded user ID
+            PostId = commentDto.PostId
         });
         return Results.Created($"comments/{comment.Id}", comment);
     }

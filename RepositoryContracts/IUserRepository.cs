@@ -9,5 +9,7 @@ namespace RepositoryContracts
         Task DeleteAsync(int id);
         Task<User> GetSingleAsync(int id);
         IQueryable<User> GetMany();
+        Task<bool> UsernameExistsAsync(string userDtoName);
+        Task<User?> AuthenticateUserAsync(string username, string password);
     }
 }

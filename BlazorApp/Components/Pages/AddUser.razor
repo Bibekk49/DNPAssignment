@@ -1,0 +1,72 @@
+@page "/add-user"
+@using System.Net
+@using ApiContracts
+@using BlazorApp.Services
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<link rel="stylesheet" href="addUser.css"/>
+<div class="register-container">
+    <h2>Create an Account</h2>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <p class="@(isSuccess ? "status-message-success" : "status-message-error")">@statusMessage</p>
+    }
+
+    <EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="input-group">
+            <InputText id="name" @bind-Value="newUser.Name" placeholder="Username" class="input-field" />
+        </div>
+        <div class="input-group">
+            <InputText id="password" @bind-Value="newUser.Password" placeholder="Password" type="password" class="input-field" />
+        </div>
+        
+        <button type="submit" class="submit-button">Register</button>
+    </EditForm>
+</div>
+
+@code {
+    private CreateUserDto newUser = new CreateUserDto
+    {
+        Name = string.Empty,
+        Password = string.Empty
+    };
+    private string statusMessage = string.Empty;
+    private bool isSuccess;
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var response = await UserService.AddUserAsync(newUser);
+
+            Console.WriteLine($"Response Status Code: {response.StatusCode}");
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                isSuccess = false;
+                statusMessage = "Username already exists.";
+            }
+            else if (response.IsSuccessStatusCode)
+            {
+                isSuccess = true;
+                statusMessage = "User successfully created!";
+                newUser = new CreateUserDto { Name = string.Empty, Password = string.Empty };
+            }
+            else
+            {
+                isSuccess = false;
+                statusMessage = "Error: Unable to create user.";
+            }
+        }
+        catch (Exception ex)
+        {
+            isSuccess = false;
+            statusMessage = $"Error: {ex.Message}";
+        }
+    }
+}

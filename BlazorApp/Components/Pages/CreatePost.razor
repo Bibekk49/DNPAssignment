@@ -1,0 +1,36 @@
+@page "/create-post"
+@using System.ComponentModel.DataAnnotations
+@using ApiContracts
+@using BlazorApp.Services
+@inject IPostService PostService
+@inject NavigationManager Navigation
+
+<link rel="stylesheet" href="createPost.css"/>
+<div class="create-post-container">
+    <h3>Create New Post</h3>
+
+    <EditForm Model="newPost" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="input-group">
+            <InputText id="title" @bind-Value="newPost.Title" placeholder="Title" class="input-field" />
+            <ValidationMessage For="@(() => newPost.Title)" />
+        </div>
+        <div class="input-group">
+            <InputTextArea id="body" @bind-Value="newPost.Body" placeholder="Body" class="textarea-field" />
+            <ValidationMessage For="@(() => newPost.Body)" />
+        </div>
+
+        <button type="submit" class="submit-button">Create Post</button>
+    </EditForm>
+</div>
+
+@code {
+    private CreatePostDto newPost = new CreatePostDto();
+
+    private async Task HandleValidSubmit()
+    {
+        await PostService.AddPostAsync(newPost);
+    }
+}

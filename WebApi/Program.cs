@@ -12,7 +12,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IPostRepository, PostFileRepository>();
 builder.Services.AddScoped<IUserRepository, UserFileRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentFileRepository>();
-
 var app = builder.Build();
 
 app.MapControllers();

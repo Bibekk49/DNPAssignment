@@ -68,4 +68,44 @@ public class PostFileRepository:IPostRepository
         List<Post> posts = JsonSerializer.Deserialize<List<Post>>(postsAsJson)!;
         return posts.AsQueryable() ?? throw new Exception("No posts found");
     }
+
+    public async Task<List<Comment>> GetCommentsByPostIdAsync(int postId)
+    {
+        // Read all posts from file
+        var postsAsJson = await File.ReadAllTextAsync(filePath);
+        List<Post> posts = JsonSerializer.Deserialize<List<Post>>(postsAsJson)!;
+
+        // Find the post with the specified ID
+        Post? post = posts.SingleOrDefault(p => p.Id == postId);
+    
+        // If post not found, throw an exception
+        if (post == null) throw new Exception("Post not found");
+
+        // Return the comments associated with this post
+        return post.Comments;
+    }
+
+    public async Task AddCommentAsync(Comment comment)
+    {
+        // Read existing posts from file
+        var postsAsJson = await File.ReadAllTextAsync(filePath);
+        List<Post> posts = JsonSerializer.Deserialize<List<Post>>(postsAsJson)!;
+
+        // Find the post to add the comment to
+        var post = posts.SingleOrDefault(p => p.Id == comment.PostId);
+        if (post == null) throw new Exception("Post not found");
+
+        // Check if there are any existing comments to avoid calling Max on an empty sequence
+        int maxCommentId = post.Comments.Any() ? post.Comments.Max(c => c.Id) : 0;
+        comment.Id = maxCommentId + 1;
+
+        // Add the comment to the post
+        post.Comments.Add(comment);
+
+        // Save the updated posts back to the file
+        postsAsJson = JsonSerializer.Serialize(posts);
+        await File.WriteAllTextAsync(filePath, postsAsJson);
+    }
+
+
 }
