@@ -6,85 +6,104 @@ namespace FileRepositories;
 
 public class UserFileRepository : IUserRepository
 {
-    private readonly string filePath = "users.json";
+    private const string FilePath = "users.json";
 
     public UserFileRepository()
     {
-        if (!File.Exists(filePath))
+        if (!File.Exists(FilePath))
         {
-            File.WriteAllText(filePath, "[]");
+            File.WriteAllText(FilePath, "[]");
         }
     }
 
     public async Task<User> AddAsync(User user)
     {
-        var usersAsJson = await File.ReadAllTextAsync(filePath);
-        List<User> users = JsonSerializer.Deserialize<List<User>>(usersAsJson)!;
-        int maxId = users.Count > 0 ? users.Max(c => c.Id) : 0;
-        user.Id = maxId + 1;
+        List<User> users = await LoadUsers();
+        user.Id = users.Count > 0 ? users.Max(c => c.Id) + 1 : 1;
         users.Add(user);
-        usersAsJson = JsonSerializer.Serialize(users);
-        await File.WriteAllTextAsync(filePath, usersAsJson);
+        await SaveList(users);
         return user;
     }
 
+    public async Task UpdateAsync(User user)
+    {
+        List<User> users = await LoadUsers();
+        User? existingUser = users.SingleOrDefault(c => c.Id == user.Id);
+        if (existingUser is null)
+        {
+            throw new Exception($"User with ID '{user.Id}' not found");
+        }
+        
+        users.Remove(existingUser);
+        users.Add(user);
+        
+        await SaveList(users);
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        List<User> users = await LoadUsers();
+        User? userToRemove = users.SingleOrDefault(c => c.Id == id);
+        if (userToRemove is null)
+        {
+            throw new Exception($"User with ID '{id}' not found");
+        }
+        
+        users.Remove(userToRemove);
+        await SaveList(users);
+    }
+
+    public async Task<User> GetSingleAsync(int id)
+    {
+        List<User> users = await LoadUsers();
+        User? user = users.SingleOrDefault(c => c.Id == id);
+
+        if (user is null) throw new Exception($"User with ID '{id}' not found");
+        
+        return user;
+    }
+
+    public IQueryable<User> GetMany()
+        => LoadUsers().Result.AsQueryable();
+
     public async Task<bool> UsernameExistsAsync(string username)
     {
-        var usersAsJson = await File.ReadAllTextAsync(filePath);
+        var usersAsJson = await File.ReadAllTextAsync(FilePath);
         List<User> users = JsonSerializer.Deserialize<List<User>>(usersAsJson)!;
         return users.Any(u => u.Name.Equals(username, StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<User?> AuthenticateUserAsync(string username, string password)
     {
-        var usersAsJson = await File.ReadAllTextAsync(filePath);
+        var usersAsJson = await File.ReadAllTextAsync(FilePath);
         List<User> users = JsonSerializer.Deserialize<List<User>>(usersAsJson)!;
 
-        // Check if there is a user with the matching username and password
         return users.SingleOrDefault(u => 
             u.Name.Equals(username, StringComparison.OrdinalIgnoreCase) &&
-            u.Password == password); // In production, use hashed passwords
+            u.Password == password); 
     }
 
-    public async Task UpdateAsync(User user)
+    private static Task SaveList(List<User> users)
     {
-        var usersAsJson = await File.ReadAllTextAsync(filePath);
-        List<User> users = JsonSerializer.Deserialize<List<User>>(usersAsJson)!;
-        var userToUpdate = users.FirstOrDefault(c => c.Id == user.Id);
-        if (userToUpdate != null)
-        {
-            users.Remove(userToUpdate);
-            users.Add(user);
-            usersAsJson = JsonSerializer.Serialize(users);
-            await File.WriteAllTextAsync(filePath, usersAsJson);
-        }
+        string usersAsJson = ListToJson(users);
+        return JsonToFileAsync(usersAsJson);
     }
 
-    public async Task DeleteAsync(int id)
+    private static Task JsonToFileAsync(string json)
+        => File.WriteAllTextAsync(FilePath, json);
+
+    private static string ListToJson(List<User> list)
+        => JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
+
+    private static async Task<List<User>> LoadUsers()
     {
-        var usersAsJson = await File.ReadAllTextAsync(filePath);
-        List<User> users = JsonSerializer.Deserialize<List<User>>(usersAsJson)!;
-        var userToDelete = users.SingleOrDefault(c => c.Id == id);
-        if (userToDelete != null)
-        {
-            users.Remove(userToDelete);
-            usersAsJson = JsonSerializer.Serialize(users);
-            await File.WriteAllTextAsync(filePath, usersAsJson);
-        }
+        string usersAsJson = await ReadJsonAsync();
+        return JsonToUserList(usersAsJson);
     }
 
-    public async Task<User> GetSingleAsync(int id)
-    {
-        var usersAsJson = await File.ReadAllTextAsync(filePath);
-        List<User> users = JsonSerializer.Deserialize<List<User>>(usersAsJson)!;
-        User? user = users.SingleOrDefault(c => c.Id == id);
-        return user ?? throw new Exception("User not found");
-    }
+    private static List<User> JsonToUserList(string usersAsJson)
+        => JsonSerializer.Deserialize<List<User>>(usersAsJson)!;
 
-    public IQueryable<User> GetMany()
-    {
-        var usersAsJson = File.ReadAllTextAsync(filePath).Result;
-        List<User> users = JsonSerializer.Deserialize<List<User>>(usersAsJson)!;
-        return users.AsQueryable() ?? throw new Exception("No users found");
-    }
+    private static Task<string> ReadJsonAsync()
+        => File.ReadAllTextAsync(FilePath);
 }

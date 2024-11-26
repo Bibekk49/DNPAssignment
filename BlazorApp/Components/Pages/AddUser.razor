@@ -1,72 +1,67 @@
-@page "/add-user"
-@using System.Net
-@using ApiContracts
+﻿@page "/AddUser"
 @using BlazorApp.Services
-@inject IUserService UserService
-@inject NavigationManager Navigation
+@using ApiContracts
+@* here we inject the IUserService. This page does not know the implementation uses http to contact a web api. It could have just been a local list*@
+@inject IUserService UserService  
 
-<link rel="stylesheet" href="addUser.css"/>
-<div class="register-container">
-    <h2>Create an Account</h2>
+<h3>AddUser</h3>
 
-    @if (!string.IsNullOrEmpty(statusMessage))
+<div>
+    <div>
+        <label>User name:</label>
+        <input type="text" @bind="userName"/>
+    </div>
+    <div>
+        <label>Password:</label>
+        <input type="text" @bind="password"/>
+    </div>
+    <div>
+        <label>Retype password:</label>
+        <input type="text" @bind="passwordAgain"/>
+    </div>
+    @if (!string.IsNullOrEmpty(message))
     {
-        <p class="@(isSuccess ? "status-message-success" : "status-message-error")">@statusMessage</p>
+        <div>
+            <label>@message</label>
+        </div>
     }
+    <div>
+        <button @onclick="CreateUser" class="btn btn-primary">Save</button>
+    </div>
 
-    <EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <div class="input-group">
-            <InputText id="name" @bind-Value="newUser.Name" placeholder="Username" class="input-field" />
-        </div>
-        <div class="input-group">
-            <InputText id="password" @bind-Value="newUser.Password" placeholder="Password" type="password" class="input-field" />
-        </div>
-        
-        <button type="submit" class="submit-button">Register</button>
-    </EditForm>
 </div>
 
 @code {
-    private CreateUserDto newUser = new CreateUserDto
-    {
-        Name = string.Empty,
-        Password = string.Empty
-    };
-    private string statusMessage = string.Empty;
-    private bool isSuccess;
+    private string userName = string.Empty;
+    private string password = string.Empty;
+    private string passwordAgain = string.Empty;
+    private string message = string.Empty;
 
-    private async Task HandleValidSubmit()
+    private async Task CreateUser()
     {
+        message = string.Empty;
+        if (!string.Equals(password, passwordAgain)) // checking the passwords match
+        {
+            message = "Passwords do not match";
+            return;
+        }
+
+        CreateUserDto dto = new() // create a dto to contain the data to be sent to the server
+        {
+           Name  = userName,
+            Password = password
+        };
+
         try
         {
-            var response = await UserService.AddUserAsync(newUser);
-
-            Console.WriteLine($"Response Status Code: {response.StatusCode}");
-
-            if (response.StatusCode == HttpStatusCode.Conflict)
-            {
-                isSuccess = false;
-                statusMessage = "Username already exists.";
-            }
-            else if (response.IsSuccessStatusCode)
-            {
-                isSuccess = true;
-                statusMessage = "User successfully created!";
-                newUser = new CreateUserDto { Name = string.Empty, Password = string.Empty };
-            }
-            else
-            {
-                isSuccess = false;
-                statusMessage = "Error: Unable to create user.";
-            }
+            UserDto created = await UserService.AddUserAsync(dto);
+            message = $"User {created.Name} created";
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            isSuccess = false;
-            statusMessage = $"Error: {ex.Message}";
+            Console.WriteLine(e);
+            message = e.Message;
         }
     }
+
 }

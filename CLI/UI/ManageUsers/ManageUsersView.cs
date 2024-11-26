@@ -1,8 +1,7 @@
-using CLI.UI.ManageUsers;
 using Entities;
 using RepositoryContracts;
 
-namespace CLI.UI.MangePosts;
+namespace CLI.UI.ManageUsers;
 
 public class ManageUsersView(IUserRepository userRepository)
 {

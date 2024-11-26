@@ -1,36 +1,85 @@
-@page "/create-post"
-@using System.ComponentModel.DataAnnotations
-@using ApiContracts
+﻿@page "/CreatePost"
 @using BlazorApp.Services
+@using System.Security.Claims
+@using ApiContracts
 @inject IPostService PostService
-@inject NavigationManager Navigation
+@inject NavigationManager NavMgr
+@attribute [Authorize]
 
-<link rel="stylesheet" href="createPost.css"/>
-<div class="create-post-container">
-    <h3>Create New Post</h3>
-
-    <EditForm Model="newPost" OnValidSubmit="HandleValidSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <div class="input-group">
-            <InputText id="title" @bind-Value="newPost.Title" placeholder="Title" class="input-field" />
-            <ValidationMessage For="@(() => newPost.Title)" />
+<div>
+    <h3>CreatePost</h3>
+    <div>
+        <label>Title:</label>
+        <input type="text" @bind="title"/>
+    </div>
+    <div>
+        <label>Body:</label>
+        <textarea @bind="body"></textarea>
+    </div>
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div>
+            <label>@message</label>
         </div>
-        <div class="input-group">
-            <InputTextArea id="body" @bind-Value="newPost.Body" placeholder="Body" class="textarea-field" />
-            <ValidationMessage For="@(() => newPost.Body)" />
-        </div>
-
-        <button type="submit" class="submit-button">Create Post</button>
-    </EditForm>
+    }
+    <div>
+        <button @onclick="Create">Create Post</button>
+    </div>
 </div>
 
 @code {
-    private CreatePostDto newPost = new CreatePostDto();
+    private string title = string.Empty;
+    private string body = string.Empty;
+    private string message = string.Empty;
+    [CascadingParameter] public Task<AuthenticationState> State { get; set; } = null!; // suppressing null warning by assigning to null!. I know this will be set when the page is loaded, from OnInitializedAsync().
 
-    private async Task HandleValidSubmit()
+    private int? currentUserId;
+
+    protected override async Task OnInitializedAsync()
     {
-        await PostService.AddPostAsync(newPost);
+        AuthenticationState authenticationState = await State;
+        ClaimsPrincipal claimsPrincipal = authenticationState.User;
+        if(claimsPrincipal.Identity is not null && claimsPrincipal.Identity.IsAuthenticated)
+        {
+            if (int.TryParse(claimsPrincipal.FindFirst("Id")?.Value, out int result))
+            {
+                currentUserId = result;
+            }
+        }
     }
+
+    private async Task Create()
+    {
+        message = string.Empty; 
+        if (string.IsNullOrEmpty(title))
+        {
+            message = "Title is required";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(body))
+        {
+            message = "Body is required";
+            return;
+        }
+        
+        var dto = new CreatePostDto
+        {
+            Title = title,
+            Body = body,
+            AuthorUserId = (int)currentUserId! 
+        };
+
+        try
+        {
+            PostDto result = await PostService.AddPostAsync(dto); 
+            NavMgr.NavigateTo("/ViewSinglePost/" + result.Id); 
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            message = e.Message;
+        }
+    }
+
 }

@@ -1,6 +1,6 @@
 using RepositoryContracts;
 
-namespace CLI.UI.MangePosts;
+namespace CLI.UI.ManageUsers;
 
 public class ListUsersView(IUserRepository userRepository)
 {

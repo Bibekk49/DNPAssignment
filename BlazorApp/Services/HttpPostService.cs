@@ -40,14 +40,23 @@ public class HttpPostService : IPostService
         }
         return await response.Content.ReadFromJsonAsync<List<CommentDto>>()!;
     }
-    public async Task AddCommentAsync(CreateCommentDto newComment)
+    public async Task<CommentDto> AddCommentAsync(CreateCommentDto newComment)
     {
-        var response = await client.PostAsJsonAsync($"api/posts/{newComment.PostId}/comments", newComment);
+        HttpResponseMessage response = await client.PostAsJsonAsync($"api/posts/{newComment.PostId}/comments", newComment);
         if (!response.IsSuccessStatusCode)
         {
             throw new Exception($"Failed to add comment: {await response.Content.ReadAsStringAsync()}");
         }
+        return await response.Content.ReadFromJsonAsync<CommentDto>()!;
     }
 
-
+    public async Task<UserDto?> GetAuthorOfPost(int postId)
+    {
+        HttpResponseMessage response = await client.GetAsync($"api/posts/{postId}/author");
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Failed to retrieve author: {await response.Content.ReadAsStringAsync()}");
+        }
+        return await response.Content.ReadFromJsonAsync<UserDto>()!;
+    }
 }

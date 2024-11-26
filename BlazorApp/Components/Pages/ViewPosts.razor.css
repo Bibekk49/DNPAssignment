@@ -1,0 +1,8 @@
+.post-box {
+    border: 1px solid #000;
+}
+
+.post-title:hover {
+    cursor: pointer;
+    text-decoration: underline dotted blue;
+}

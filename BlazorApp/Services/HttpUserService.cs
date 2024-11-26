@@ -1,66 +1,79 @@
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using ApiContracts;
-using BlazorApp.Services;
+using System.Threading.Tasks;
+using System;
 
-public class HttpUserService : IUserService
+namespace BlazorApp.Services
 {
-    private readonly HttpClient _client;
-
-    public HttpUserService(HttpClient client)
+    public class HttpUserService : IUserService
     {
-        _client = client ?? throw new ArgumentNullException(nameof(client));
-    }
+        private readonly HttpClient _client;
 
-    public async Task<HttpResponseMessage> AddUserAsync(CreateUserDto newUser)
-    {
-        return await _client.PostAsJsonAsync("api/users/create", newUser);
-    }
-
-
-    public async Task UpdateUserAsync(int id, UpdateUserDto request)
-    {
-        HttpResponseMessage httpResponse = await _client.PutAsJsonAsync($"users/{id}", request);
-        if (!httpResponse.IsSuccessStatusCode)
+        public HttpUserService(HttpClient client)
         {
+            _client = client ?? throw new ArgumentNullException(nameof(client));
+        }
+
+        public async Task<UserDto> AddUserAsync(CreateUserDto newUser)
+        {
+            HttpResponseMessage httpResponse = await _client.PostAsJsonAsync("api/users/create", newUser);
             string response = await httpResponse.Content.ReadAsStringAsync();
-            throw new Exception(response);
-        }
-    }
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to create user. Status: {httpResponse.StatusCode}, Response: {response}");
+            }
 
-    public async Task<UserDto> GetSingleAsync(int id)
-    {
-        HttpResponseMessage httpResponse = await _client.GetAsync($"users/{id}");
-        string response = await httpResponse.Content.ReadAsStringAsync();
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            throw new Exception(response);
+            return JsonSerializer.Deserialize<UserDto>(response,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
         }
 
-        return JsonSerializer.Deserialize<UserDto>(response,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-    }
-
-    public async Task<IEnumerable<UserDto>> GetManyAsync(string? name)
-    {
-        string query = string.IsNullOrEmpty(name) ? "" : $"?name={name}";
-        HttpResponseMessage httpResponse = await _client.GetAsync($"users{query}");
-        string response = await httpResponse.Content.ReadAsStringAsync();
-        if (!httpResponse.IsSuccessStatusCode)
+        public async Task UpdateUserAsync(int id, UpdateUserDto request)
         {
-            throw new Exception(response);
+            HttpResponseMessage httpResponse = await _client.PutAsJsonAsync($"api/users/{id}", request);
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                string response = await httpResponse.Content.ReadAsStringAsync();
+                throw new Exception(response);
+            }
         }
 
-        return JsonSerializer.Deserialize<IEnumerable<UserDto>>(response,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-    }
-
-    public async Task DeleteUserAsync(int id)
-    {
-        HttpResponseMessage httpResponse = await _client.DeleteAsync($"users/{id}");
-        if (!httpResponse.IsSuccessStatusCode)
+        public async Task<UserDto> GetSingleAsync(int id)
         {
+            HttpResponseMessage httpResponse = await _client.GetAsync($"api/users/{id}");
             string response = await httpResponse.Content.ReadAsStringAsync();
-            throw new Exception(response);
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                throw new Exception(response);
+            }
+
+            return JsonSerializer.Deserialize<UserDto>(response,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        }
+
+        public async Task<IEnumerable<UserDto>> GetManyAsync(string? name)
+        {
+            string query = string.IsNullOrEmpty(name) ? "" : $"?name={name}";
+            HttpResponseMessage httpResponse = await _client.GetAsync($"api/users{query}");
+            string response = await httpResponse.Content.ReadAsStringAsync();
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                throw new Exception(response);
+            }
+
+            return JsonSerializer.Deserialize<IEnumerable<UserDto>>(response,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        }
+
+        public async Task DeleteUserAsync(int id)
+        {
+            HttpResponseMessage httpResponse = await _client.DeleteAsync($"api/users/{id}");
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                string response = await httpResponse.Content.ReadAsStringAsync();
+                throw new Exception(response);
+            }
         }
     }
 }

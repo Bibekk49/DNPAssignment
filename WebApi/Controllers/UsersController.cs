@@ -1,79 +1,83 @@
 using ApiContracts;
-
 using Entities;
-
 using Microsoft.AspNetCore.Mvc;
-
 using RepositoryContracts;
 
-namespace WebAPI.Controllers;
-
-[ApiController]
-[Route("api/users")]
-public class UsersController : ControllerBase
+namespace WebApi.Controllers
 {
-    private readonly IUserRepository _userRepository;
-
-    public UsersController(IUserRepository userRepository)
+    [ApiController]
+    [Route("api/users")]
+    public class UsersController : ControllerBase
     {
-        _userRepository = userRepository;
-    }
+        private readonly IUserRepository _userRepository;
 
-    [HttpPost("create")]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto userDto)
-    {
-        // Check if the username already exists
-        bool usernameExists = await _userRepository.UsernameExistsAsync(userDto.Name);
-        if (usernameExists)
+        public UsersController(IUserRepository userRepository)
         {
-            return Conflict("Username already exists");
+            _userRepository = userRepository;
         }
 
-        // Create and save the new user
-        var user = new User
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDto userDto)
         {
-            Name = userDto.Name,
-            Password = userDto.Password
-        };
-        await _userRepository.AddAsync(user);
+            // Check if the username already exists
+            bool usernameExists = await _userRepository.UsernameExistsAsync(userDto.Name);
+            if (usernameExists)
+            {
+                return Conflict("Username already exists");
+            }
 
-        return CreatedAtAction(nameof(CreateUser), new { id = user.Id }, user);
-    }
+            // Create and save the new user
+            var user = new User
+            {
+                Name = userDto.Name,
+                Password = userDto.Password
+            };
+            await _userRepository.AddAsync(user);
 
-    [HttpGet("{id:int}")]
-    public async Task<IResult> GetSingleAsync(int id)
-    {
-        User user = await _userRepository.GetSingleAsync(id);
-        return Results.Ok(new UserDto { Id = user.Id, Name = user.Name });
-    }
-
-    [HttpGet]
-    public async Task<IResult> GetManyAsync([FromQuery] string? name)
-    {
-        IQueryable<User> users = _userRepository.GetMany();
-
-        // Filter users by the "name" query parameter
-        if (!string.IsNullOrEmpty(name))
-        {
-            users = users.Where(u => u.Name.ToLower().Contains(name.ToLower()));
+            // Return the created user as a UserDto
+            return CreatedAtAction(nameof(CreateUser), new { id = user.Id }, new UserDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Password = user.Password
+            });
         }
 
-        IQueryable<UserDto> userDtos = users.Select(u => new UserDto { Id = u.Id, Name = u.Name });
+        [HttpGet("{id:int}")]
+        public async Task<IResult> GetSingleAsync(int id)
+        {
+            User user = await _userRepository.GetSingleAsync(id);
+            return Results.Ok(new UserDto { Id = user.Id, Name = user.Name, Password = user.Password });
+        }
 
-        return Results.Ok(userDtos);
-    }
+        [HttpGet]
+        public async Task<IResult> GetManyAsync([FromQuery] string? name)
+        {
+            IQueryable<User> users = _userRepository.GetMany();
 
-    [HttpPut("{id:int}")]
-    public async Task<IResult> UpdateAsync(int id, CreateUserDto userDto)
-    {
-        await _userRepository.UpdateAsync(new User { Id = id, Name = userDto.Name, Password = userDto.Password });
-        return Results.Ok();
-    }
+            // Filter users by the "name" query parameter
+            if (!string.IsNullOrEmpty(name))
+            {
+                users = users.Where(u => u.Name.ToLower().Contains(name.ToLower()));
+            }
 
-    [HttpDelete("{id:int}")]
-    public async Task<IResult> DeleteAsync(int id)
-    {
-        await _userRepository.DeleteAsync(id);
-        return Results.Ok();
+            IQueryable<UserDto> userDtos = users.Select(u => new UserDto { Id = u.Id, Name = u.Name, Password = u.Password });
+
+            return Results.Ok(userDtos);
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<IResult> UpdateAsync(int id, CreateUserDto userDto)
+        {
+            await _userRepository.UpdateAsync(new User { Id = id, Name = userDto.Name, Password = userDto.Password });
+            return Results.Ok();
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IResult> DeleteAsync(int id)
+        {
+            await _userRepository.DeleteAsync(id);
+            return Results.Ok();
+        }
     }
 }

@@ -6,66 +6,79 @@ namespace FileRepositories;
 
 public class CommentFileRepository : ICommentRepository
 {
-    private readonly string filePath = "comments.json";
+    private const string FilePath = "comments.json";
 
     public CommentFileRepository()
     {
-        if (!File.Exists(filePath))
+        if (!File.Exists(FilePath))
         {
-            File.WriteAllText(filePath, "[]");
+            File.WriteAllText(FilePath, "[]");
         }
     }
+
     public async Task<Comment> AddAsync(Comment comment)
     {
-        var commentsAsJson = await File.ReadAllTextAsync(filePath);
-        List<Comment> comments = JsonSerializer.Deserialize<List<Comment>>(commentsAsJson)!;
-        int maxId = comments.Count > 0 ? comments.Max(c => c.Id) :0;
-        comment.Id = maxId + 1;
+        List<Comment> comments = await LoadCommentsAsync();
+        comment.Id = comments.Count > 0 ? comments.Max(c => c.Id) + 1 : 1;
         comments.Add(comment);
-        commentsAsJson = JsonSerializer.Serialize(comments);
-        await File.WriteAllTextAsync(filePath, commentsAsJson);
+        await SaveCommentsAsync(comments);
         return comment;
+    }
+
+    private static Task SaveCommentsAsync(List<Comment> comments)
+    {
+        string commentsAsJson = JsonSerializer.Serialize(comments, new JsonSerializerOptions { WriteIndented = true });
+        return File.WriteAllTextAsync(FilePath, commentsAsJson);
+    }
+
+    private static async Task<List<Comment>> LoadCommentsAsync()
+    {
+        string commentsAsJson = await File.ReadAllTextAsync(FilePath);
+        List<Comment>
+            comments = JsonSerializer
+                    .Deserialize<List<Comment>>(commentsAsJson)
+                !; // The exclamation mark at the end is to suppress the nullable warning. Basically it converts from List<Comment>? to List<Comment>. I can use it when I am certain I don't read null from the file.
+        return comments;
     }
 
     public async Task UpdateAsync(Comment comment)
     {
-       var commenstAsJson = await File.ReadAllTextAsync(filePath);
-         List<Comment> comments = JsonSerializer.Deserialize<List<Comment>>(commenstAsJson)!;
-            var commentToUpdate = comments.FirstOrDefault(c => c.Id == comment.Id);
-            if (commentToUpdate != null)
-            {
-                comments.Remove(commentToUpdate);
-                comments.Add(comment);
-                commenstAsJson = JsonSerializer.Serialize(comments);
-                await File.WriteAllTextAsync(filePath, commenstAsJson);
-            }
+        List<Comment> comments = await LoadCommentsAsync();
+        Comment existingComment = await GetSingleAsync(comment.Id);
+
+        comments.Remove(existingComment);
+        comments.Add(comment);
+
+        await SaveCommentsAsync(comments);
     }
 
     public async Task DeleteAsync(int id)
     {
-      var commenstAsJson = await File.ReadAllTextAsync(filePath);
-         List<Comment> comments = JsonSerializer.Deserialize<List<Comment>>(commenstAsJson)!;
-            var commentToDelete = comments.SingleOrDefault(c => c.Id == id);
-            if (commentToDelete != null)
-            {
-                comments.Remove(commentToDelete);
-                commenstAsJson = JsonSerializer.Serialize(comments);
-                await File.WriteAllTextAsync(filePath, commenstAsJson);
-            }
+        List<Comment> comments = await LoadCommentsAsync();
+
+        Comment? commentToRemove = comments.SingleOrDefault(c => c.Id == id);
+        if (commentToRemove is null)
+        {
+            throw new Exception($"Comment with ID '{id}' not found");
+        }
+
+        comments.Remove(commentToRemove);
+
+        await SaveCommentsAsync(comments);
     }
 
     public async Task<Comment> GetSingleAsync(int id)
     {
-        var commentsAsJson = await File.ReadAllTextAsync(filePath);
-        List<Comment> comments = JsonSerializer.Deserialize<List<Comment>>(commentsAsJson)!;
+        List<Comment> comments = await LoadCommentsAsync();
         Comment? comment = comments.SingleOrDefault(c => c.Id == id);
-        return comment?? throw new InvalidOperationException("Comment not found");
+        if (comment is null)
+        {
+            throw new Exception($"Comment with ID '{id}' not found");
+        }
+
+        return comment;
     }
 
     public IQueryable<Comment> GetMany()
-    {
-        var commentsAsJson = File.ReadAllTextAsync(filePath).Result;
-        List<Comment> comments = JsonSerializer.Deserialize<List<Comment>>(commentsAsJson)!;
-        return comments.AsQueryable()?? throw new InvalidOperationException("No comments found") ;
-    }
+        => LoadCommentsAsync().Result.AsQueryable();
 }

@@ -11,4 +11,5 @@ public class CreatePostDto
 
     [Required(ErrorMessage = "Body is required")]
     public string Body { get; set; } = string.Empty;
+    public int AuthorUserId { get; set; }
 }

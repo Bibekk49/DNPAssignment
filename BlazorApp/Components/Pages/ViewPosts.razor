@@ -1,0 +1,51 @@
+﻿@page "/ViewPosts"
+@using ApiContracts
+@using ApiContracts
+@using BlazorApp.Services
+@inject IPostService PostService
+@inject NavigationManager NavMgr
+
+<h3>ViewPosts</h3>
+<div>
+    @if (!posts.Any()) 
+    {
+        <label>No posts to view</label>
+    }
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <label>@message</label>
+    }
+    
+    @foreach (var post in posts)
+    {
+        <div class="post-box">
+            <h4 class="post-title" @onclick="() => ViewSinglePost(post.Id)">@post.Title</h4>
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<PostDto> posts = []; 
+    private string message = string.Empty;
+
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            posts = await PostService.GetPostsAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            message = e.Message;
+        }
+    }
+
+    private void ViewSinglePost(int postId)
+    {
+        NavMgr.NavigateTo($"ViewSinglePost/{postId}");
+    }
+
+}
+

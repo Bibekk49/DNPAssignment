@@ -1,12 +1,9 @@
 using ApiContracts;
-
 using Entities;
-
 using Microsoft.AspNetCore.Mvc;
-
 using RepositoryContracts;
 
-namespace WebAPI.Controllers;
+namespace WebApi.Controllers;
 
 [ApiController]
 [Route("comments")]

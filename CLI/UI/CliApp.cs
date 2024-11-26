@@ -1,6 +1,6 @@
 using CLI.UI.ManageComments;
 using CLI.UI.ManagePosts;
-using CLI.UI.MangePosts;
+using CLI.UI.ManageUsers;
 using RepositoryContracts;
 
 namespace CLI.UI;
